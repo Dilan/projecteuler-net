@@ -1,6 +1,6 @@
 projecteuler-net
 ================
 
-solved problems on projecteuler.net with JavaScript
+Solved problems on projecteuler.net with JavaScript / Python
 
 ![dilan-x](http://projecteuler.net/profile/dilan-x.png)
