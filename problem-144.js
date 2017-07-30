@@ -2,8 +2,10 @@ function Ellipse(a, b, r) {
     this.a = a;
     this.b = b;
     this.r = r;
-}
-var ellipse = new Ellipse(4, 1, 100);
+    this.slopeOfTangentLine = function(x, y) {
+        return this.a * x / (this.b * y) * (-1);
+    }
+};
 
 function Point(x, y) {
     this.x = x;
@@ -14,6 +16,29 @@ function Line(m, b) {
     this.m = m;
     this.b = b;
 }
+
+const deg2rad = Math.PI/180;
+const rad2deg = 180/Math.PI;
+
+const reflection = function(point, line, ellipse) {
+    var tangent = lineFunc(
+        point,
+        ellipse.slopeOfTangentLine(point.x, point.y)
+    );
+    var perpendicular = perpendicularLine(point, tangent);
+
+    var theAngle = Math.atan(perpendicular.m) * rad2deg;
+    if (theAngle < 0) { theAngle = 180 + theAngle; }
+
+    var t = angle(perpendicular, line);
+    var newAngle = theAngle + Math.atan(t) * rad2deg;
+    var m = Math.tan(newAngle * deg2rad);
+    var reflected = lineFunc(point, m);
+
+    var intersectionPoint = secondIntersection(reflected, ellipse, point);
+
+    return [intersectionPoint, reflected];
+};
 
 var perpendicularLine = function(point, line) {
     var m = -1 / line.m;
@@ -27,7 +52,7 @@ var lineFunc = function(point, m) {
 var lineByPoints = function(point1, point2) {
     var m = (point2.y - point1.y) / (point2.x - point1.x);
     return lineFunc(point1, m);
-}
+};
 
 var quadraticEquation = function(a, b, c) {
     var result = (-1 * b + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a);
@@ -51,53 +76,24 @@ var secondIntersection = function(line, ellipse, point) {
     return new Point(x, y);
 };
 
-var next = function(point, line) {
-    var deg2rad = Math.PI/180;
-    var rad2deg = 180/Math.PI;
+var next = function(nextPoint, line, ellipse, counter) {
+    counter++;
+    var result = reflection(nextPoint, line, ellipse);
 
-    var m = point.x / point.y * -4;
+    nextPoint = result[0];
+    line = result[1];
 
-    var tangent = lineFunc(point, m);
-    var perpendicular = perpendicularLine(point, tangent);
-
-    /*
-    console.log('line =>', line);
-    console.log('tangent =>', tangent);
-    console.log('perpendicular =>',perpendicular);
-    */
-
-    var theAngle = Math.atan(perpendicular.m) * rad2deg;
-    if (theAngle < 0) { theAngle = 180 + theAngle; }
-
-    var t = angle(perpendicular, line);
-    var newAngle = theAngle + Math.atan(t) * rad2deg;
-    var mmm = Math.tan( newAngle * deg2rad);
-    var reflected = lineFunc(point, mmm);
-
-    return secondIntersection(reflected, ellipse, point);
-};
-
-var solution = function(point, sourcePoint) {
-    var counter = 0;
-    while (true) {
-        counter++;
-        // console.log('from ',sourcePoint, ' --> ', point)
-
-        var line = lineByPoints(sourcePoint, point);
-        var nextPoint = next(point, line);
-        var npx = parseFloat(nextPoint.x.toFixed(2));
-        var npy = parseFloat(nextPoint.y.toFixed(2));
-
-        if (npx <= 0.01 && npx >= -0.01 &&
-            npy <= 10.01 && npy >= 9.99 )
-        {
-            console.log('', counter, 'DONE ===>', nextPoint);
-            break;
-        }
-        sourcePoint = point;
-        point = nextPoint;
+    if (nextPoint.x <= 0.01 && nextPoint.x >= -0.01 &&
+        nextPoint.y <= 10.01 && nextPoint.y >= 9.99)
+    {
+        return counter;
     }
-    // 354
-};
+    return next(nextPoint, line, ellipse, counter);
+}
 
-solution(new Point(1.4, -9.6), new Point(0.0, 10.1));
+var startPoint = new Point(0.0, 10.1);
+var nextPoint = new Point(1.4, -9.6);
+var ellipse = new Ellipse(4, 1, 100);
+var line = lineByPoints(startPoint, nextPoint);
+
+console.log('Anser is:', next(nextPoint, line, ellipse, 0));
